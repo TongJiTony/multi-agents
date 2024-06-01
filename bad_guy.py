@@ -77,21 +77,40 @@ class BadGuy:
         self.player_num = player_num
         self.common_word = common_word
         self.undercover_word = undercover_word
-        words = [common_word] * (player_num - 1) + [undercover_word]
-        random.shuffle(words)
-
         self.players: List[Player] = []
-        for index, word in enumerate(words):
+        for index in range(player_num):
+            if index == 5:  # 固定6号玩家为卧底（index是从0开始，所以6号玩家是index 5）
+                word = undercover_word
+                is_undercover = True
+            else:
+                word = common_word
+                is_undercover = False
+
             self.players.append(
                 Player(
                     index=index,
                     player_id=str(index + 1),
                     word=word,
-                    is_undercover=word == undercover_word,
+                    is_undercover=is_undercover,
                     active=True,
                     history=[]
                 )
             )
+
+        # words = [common_word] * (player_num - 1) + [undercover_word]
+        # random.shuffle(words)
+
+        # for index, word in enumerate(words):
+        #     self.players.append(
+        #         Player(
+        #             index=index,
+        #             player_id=str(index + 1),
+        #             word=word,
+        #             is_undercover=word == undercover_word,
+        #             active=True,
+        #             history=[]
+        #         )
+        #     )
 
         self.game_id = uuid.uuid4()
         self.current_turn = 1
@@ -125,33 +144,46 @@ class BadGuy:
 
     def player_statement(self, player: Player):
         word = player.word
-        prompt = build_statement_prompt_test(
+        prompt = build_statement_prompt(
             word,
             user_id=player.player_id,
             turn_id=self.current_turn,
             history=self.collect_history()
         )
-        content = self.call_llm(prompt, prefill="<thinking>", stream=False)
-        result = content
+        
+        # prompt = build_statement_prompt_test(
+        #     word,
+        #     user_id=player.player_id,
+        #     turn_id=self.current_turn,
+        #     history=self.collect_history()
+        # )
+        
+        while True:
+            try:
+                content = self.call_llm(prompt, prefill="<thinking>", stream=False)
+                result = content
 
-        # Debug print to inspect the result
-        print(f"DEBUG: result = {result}")
+                # Debug print to inspect the result
+                print(f"DEBUG: result = {result}")
 
-        thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
-        statement_match = re.findall("<output>(.*?)</output>", result, re.S)
+                thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                statement_match = re.findall("<output>(.*?)</output>", result, re.S)
 
-        thinking = thinking_match[0].strip() if thinking_match else ""
-        if not statement_match:
-            raise ValueError(f"Expected tags not found in result: {result}")
+                thinking = thinking_match[0].strip() if thinking_match else ""
+                if not statement_match:
+                    raise ValueError(f"Expected tags not found in result: {result}")
 
-        statement = statement_match[0].strip()
+                statement = statement_match[0].strip()
 
-        player.history.append({
-            "turn": self.current_turn,
-            "statement": statement,
-            "thinking": thinking
-        })
-        return statement
+                player.history.append({
+                    "turn": self.current_turn,
+                    "statement": statement,
+                    "thinking": thinking
+                })
+                return statement
+            
+            except ValueError as e:
+                print(f"Error occurred: {e}. Retrying...")
 
     def player_vote(self, player: Player):
         active_players = [f"player_{p.player_id}" for p in self.players if p.active and p.player_id != player.player_id]
@@ -164,34 +196,41 @@ class BadGuy:
             active_players=active_players,
             user_outed=user_outed
         )
-        content = self.call_llm(prompt, prefill="<thinking>", stream=False)
-        result = content
+        
+        while True:
+            try:
+                content = self.call_llm(prompt, prefill="<thinking>", stream=False)
+                result = content
 
-        # Debug print to inspect the result
-        print(f"DEBUG: result = {result}")
+                # Debug print to inspect the result
+                print(f"DEBUG: result = {result}")
 
-        thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
-        vote_match = re.findall("<output>(.*?)</output>", result, re.S)
+                thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                vote_match = re.findall("<output>(.*?)</output>", result, re.S)
 
-        thinking = thinking_match[0].strip() if thinking_match else ""
-        if not vote_match:
-            raise ValueError(f"Expected tags not found in result: {result}")
+                thinking = thinking_match[0].strip() if thinking_match else ""
+                if not vote_match:
+                    raise ValueError(f"Expected tags not found in result: {result}")
 
-        vote = vote_match[0].strip()
+                vote = vote_match[0].strip()
 
-        # Extract player ID from the vote result
-        vote_id_match = re.findall(r"player_(\d+)", vote)
-        if not vote_id_match:
-            raise ValueError(f"Invalid vote result: {vote}")
+                # Extract player ID from the vote result
+                vote_id_match = re.findall(r"player_(\d+)", vote)
+                if not vote_id_match:
+                    raise ValueError(f"Invalid vote result: {vote}")
 
-        vote_id = vote_id_match[0]
+                vote_id = vote_id_match[0]
 
-        player.vote_history.append({
-            "turn": self.current_turn,
-            "vote": vote_id,
-            "thinking": thinking
-        })
-        return vote_id
+                player.vote_history.append({
+                    "turn": self.current_turn,
+                    "vote": vote_id,
+                    "thinking": thinking
+                })
+                return vote_id
+            
+            except ValueError as e:
+                print(f"Error occurred: {e}. Retrying...")
+
 
     def next_turn_statement(self):
         for player in self.players:

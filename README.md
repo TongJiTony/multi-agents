@@ -4,12 +4,13 @@
 - 奖励函数：
 $$
 RewardFunction=\sum_{i=0}^{N}{\delta_i\cdot (N-i-1-v_i)\cdot \eta_i} \quad\quad (N-i\ge 3)
+$$
 \delta_i:卧底第i轮存活情况，活为1，不活为0
 N:场上初始总人数
 v_i:第i轮投票卧底获得的票数
 \eta_i:第i轮奖励系数
 \eta_i:第i轮奖励系数
-$$
+
 
 - 归一化函数：
 $$

@@ -25,7 +25,7 @@ def format_history(history: List[dict]):
     for his_idx, his_turn in enumerate(history):
         cur_turn = ''
         for his_user_idx, his_user_turn in his_turn.items():
-            cur_turn += f'<agent_{his_user_idx}>\n{his_user_turn}\n</agent_{his_user_idx}>\n'
+            cur_turn += f'<player_{his_user_idx}>\n{his_user_turn}\n</player_{his_user_idx}>\n'
         if len(cur_turn):
             cur_turn_history = f'<turn_{his_idx+1}>\n' + cur_turn + f'</turn_{his_idx+1}>'
             cur_history += '\n' + cur_turn_history
@@ -61,7 +61,7 @@ class Player(BaseModel):
     vote_history: List[dict] = Field(default_factory=lambda: [])
 
 class WhoIsUndercover:
-    def __init__(self, player_num=4, common_word="苹果", undercover_word="香蕉", human_player_id=None):
+    def __init__(self, player_num=6, common_word="苹果", undercover_word="香蕉", human_player_id=None):
         assert player_num > 2, player_num
         self.player_num = player_num
         self.common_word = common_word
@@ -131,20 +131,39 @@ class WhoIsUndercover:
                 turn_id=self.current_turn,
                 history=self.collect_history()
             )
-            content = self.call_llm(prompt, prefill="<thinking>", stream=False)
-            result = '<thinking>' + content
+            
+            # prompt = build_statement_prompt_test(
+            #     word,
+            #     user_id=player.player_id,
+            #     turn_id=self.current_turn,
+            #     history=self.collect_history()
+            # )
+            
+            while True:
+                try:
+                    content = self.call_llm(prompt, prefill="<thinking>", stream=False)
+                    result = content
 
-            # Debug print to inspect the result
-            print(f"DEBUG: result = {result}")
+                    # Debug print to inspect the result
+                    print(f"DEBUG: result = {result}")
 
-            thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
-            statement_match = re.findall("<output>(.*?)</output>", result, re.S)
+                    thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                    statement_match = re.findall("<output>(.*?)</output>", result, re.S)
 
-            if not thinking_match or not statement_match:
-                raise ValueError(f"Expected tags not found in result: {result}")
+                    thinking = thinking_match[0].strip() if thinking_match else ""
+                    if not statement_match:
+                        raise ValueError(f"Expected tags not found in result: {result}")
 
-            thinking = thinking_match[0].strip()
-            statement = statement_match[0].strip()
+                    statement = statement_match[0].strip()
+
+                    player.history.append({
+                        "turn": self.current_turn,
+                        "statement": statement,
+                        "thinking": thinking
+                    })
+                    return statement
+                except ValueError as e:
+                    print(f"Error occurred: {e}. Retrying...")
 
         player.history.append({
             "turn": self.current_turn,
@@ -157,8 +176,8 @@ class WhoIsUndercover:
         if player.player_id == self.human_player_id and vote is not None:
             thinking = "User provided input."
         else:
-            active_players = [f"agent_{p.player_id}" for p in self.players if p.active and p.player_id != player.player_id]
-            user_outed = ", ".join([f"agent_{p.player_id}" for p in self.players if not p.active])
+            active_players = [f"player_{p.player_id}" for p in self.players if p.active and p.player_id != player.player_id]
+            user_outed = ", ".join([f"player_{p.player_id}" for p in self.players if not p.active])
             prompt = build_vote_prompt(
                 word=player.word,
                 user_id=player.player_id,
@@ -167,27 +186,40 @@ class WhoIsUndercover:
                 active_players=active_players,
                 user_outed=user_outed
             )
-            content = self.call_llm(prompt, prefill="<thinking>", stream=False)
-            result = '<thinking>' + content
+            
+            while True:
+                try:
+                    content = self.call_llm(prompt, prefill="<thinking>", stream=False)
+                    result = content
 
-            # Debug print to inspect the result
-            print(f"DEBUG: result = {result}")
+                    # Debug print to inspect the result
+                    print(f"DEBUG: result = {result}")
 
-            thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
-            vote_match = re.findall("<output>(.*?)</output>", result, re.S)
+                    thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                    vote_match = re.findall("<output>(.*?)</output>", result, re.S)
 
-            if not thinking_match or not vote_match:
-                raise ValueError(f"Expected tags not found in result: {result}")
+                    thinking = thinking_match[0].strip() if thinking_match else ""
+                    if not vote_match:
+                        raise ValueError(f"Expected tags not found in result: {result}")
 
-            thinking = thinking_match[0].strip()
-            vote = vote_match[0].strip()
+                    vote = vote_match[0].strip()
 
-            # Extract player ID from the vote result
-            vote_id_match = re.findall(r"agent_(\d+)", vote)
-            if not vote_id_match:
-                raise ValueError(f"Invalid vote result: {vote}")
+                    # Extract player ID from the vote result
+                    vote_id_match = re.findall(r"player_(\d+)", vote)
+                    if not vote_id_match:
+                        raise ValueError(f"Invalid vote result: {vote}")
 
-            vote = vote_id_match[0]
+                    vote_id = vote_id_match[0]
+
+                    player.vote_history.append({
+                        "turn": self.current_turn,
+                        "vote": vote_id,
+                        "thinking": thinking
+                    })
+                    return vote_id
+                
+                except ValueError as e:
+                    print(f"Error occurred: {e}. Retrying...")
 
         player.vote_history.append({
             "turn": self.current_turn,
@@ -228,10 +260,14 @@ class WhoIsUndercover:
         votes = defaultdict(int)
         for player in self.players:
             if player.vote_history[-1]['turn'] == self.current_turn:
-                votes[str(player.vote_history[-1]['vote']).replace("agent_", "")] += 1
-        
-        votes_sorted = sorted(list(votes.items()), key=lambda x: x[1], reverse=True)
-        vote_res = votes_sorted[0][0]
+                votes[str(player.vote_history[-1]['vote']).replace("player_", "")] += 1
+
+        # 找出票数最多的玩家
+        max_votes = max(votes.values())
+        candidates = [player_id for player_id, vote_count in votes.items() if vote_count == max_votes]
+
+        # 随机选择一个候选人
+        vote_res = random.choice(candidates)
 
         active_player_ids = [player.player_id for player in self.players if player.active]
         assert vote_res in active_player_ids, (vote_res, active_player_ids)
@@ -271,7 +307,7 @@ class WhoIsUndercover:
 #     for result in game.next_turn_vote():
 #         player = result['player']
 #         vote = result['vote']
-#         print(f"Turn {turn}, Player {player.player_id} voted for agent_{vote}")
+#         print(f"Turn {turn}, Player {player.player_id} voted for player_{vote}")
 
 #     eliminated_player = game.execute_vote_result()
 #     print(f"Turn {turn}, Player {eliminated_player.player_id} was eliminated")

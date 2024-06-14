@@ -42,7 +42,7 @@ def start_new_game():
     st.toast(msg)
     
     obj = WhoIsUndercover(
-        player_num=4,
+        player_num=6,
         common_word=common_word,
         undercover_word=undercover_word,
         human_player_id="1"  # 假设人类玩家的 ID 是 1
@@ -80,7 +80,7 @@ def next_turn():
             for player_vote in game_obj.next_turn_vote(human_vote=human_vote):
                 player: Player = player_vote['player']
                 vote = player_vote['vote']
-                st.write(f"Player {player.player_id} voted for agent_{vote}")
+                st.write(f"Player {player.player_id} voted for player_{vote}")
 
             eliminated_player = game_obj.execute_vote_result()
             st.write(f"Player {eliminated_player.player_id} was eliminated")

@@ -18,10 +18,10 @@ if "is_game_close" not in st.session_state:
     st.session_state['is_game_close'] = False
 
 if "undercover_word" not in st.session_state:
-    st.session_state['undercover_word'] = "香蕉"
+    st.session_state['undercover_word'] = "灌汤包"
 
 if "common_word" not in st.session_state:
-    st.session_state['common_word'] = '苹果'
+    st.session_state['common_word'] = '小笼包'
 
 if "current_phase" not in st.session_state:
     st.session_state['current_phase'] = "statement"
@@ -62,9 +62,9 @@ def next_turn():
             thinking = player_statement['thinking']  # 获取思考内容
             # if thinking == "":
             #     thinking = "大脑思考不动了"
-            st.write(f"Player {player.player_id} 的思考: \n{thinking}")
-            st.write(f"Player {player.player_id} 的陈述: {statement}")
-            time.sleep(2)  # 等待2秒钟以逐步显示
+            st.markdown(f"**Player {player.player_id} 的思考:** \n{thinking}</span>", unsafe_allow_html=True)
+            st.write(f"**Player {player.player_id} 的陈述:** {statement}")
+            # time.sleep(2)  # 等待2秒钟以逐步显示
 
         st.session_state['current_phase'] = "vote"  # 切换到投票阶段
 
@@ -76,9 +76,9 @@ def next_turn():
             thinking = player_vote['thinking'] # 获取思考内容
             # if thinking == "":
             #     thinking = "大脑思考不动了"
-            st.write(f"Player {player.player_id} 的思考: \n{thinking}")
+            st.write(f"**Player {player.player_id} 的思考:** \n{thinking}")
             st.write(f"Player {player.player_id} 投票给 player_{vote}")
-            time.sleep(2)  # 等待2秒钟以逐步显示
+            # time.sleep(2)  # 等待2秒钟以逐步显示
 
         eliminated_player = game_obj.execute_vote_result()
         st.write(f"Player {eliminated_player.player_id} 被淘汰")

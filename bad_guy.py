@@ -261,9 +261,13 @@ class BadGuy:
         for player in self.players:
             if player.vote_history[-1]['turn'] == self.current_turn:
                 votes[str(player.vote_history[-1]['vote']).replace("player_", "")] += 1
-        
-        votes_sorted = sorted(list(votes.items()), key=lambda x: x[1], reverse=True)
-        vote_res = votes_sorted[0][0]
+
+        # 找出票数最多的玩家
+        max_votes = max(votes.values())
+        candidates = [player_id for player_id, vote_count in votes.items() if vote_count == max_votes]
+
+        # 随机选择一个候选人
+        vote_res = random.choice(candidates)
 
         active_player_ids = [player.player_id for player in self.players if player.active]
         assert vote_res in active_player_ids, (vote_res, active_player_ids)

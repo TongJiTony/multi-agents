@@ -24,11 +24,11 @@ with strategy: 0.43
 ## 运行脚本
 - 6个agent智能对战版（电子斗蛐蛐）
 ```bash
-python bad_guy.py
+streamlit run front_end_auto.py
 ```
 - 5个agent加人类玩家
 ```bash
-python bad_guy_human.py
+streamlit run front_end.py
 ```
 - 计算游戏公平性（场上所有玩家随机投票，卧底胜利概率）
 ```bash

@@ -18,10 +18,10 @@ if "is_game_close" not in st.session_state:
     st.session_state['is_game_close'] = False
 
 if "undercover_word" not in st.session_state:
-    st.session_state['undercover_word'] = "灌汤包"
+    st.session_state['undercover_word'] = "香蕉"
 
 if "common_word" not in st.session_state:
-    st.session_state['common_word'] = '小笼包'
+    st.session_state['common_word'] = '苹果'
 
 if "current_phase" not in st.session_state:
     st.session_state['current_phase'] = "statement"

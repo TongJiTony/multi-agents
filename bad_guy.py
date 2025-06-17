@@ -12,6 +12,7 @@ import time
 from dotenv import load_dotenv
 import os
 
+load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # 加载提示文件
@@ -116,7 +117,7 @@ class BadGuy:
         self.current_turn = 1
         self.llm = ChatOpenAI(
             temperature=0.95,
-            model="glm-4",
+            model="glm-4-flash-250414",
             openai_api_key=openai_api_key,
             openai_api_base="https://open.bigmodel.cn/api/paas/v4/"
         )

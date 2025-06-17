@@ -1,5 +1,11 @@
 # 谁是卧底：多智能体对抗策略
 
+## 环境设置
+1. 使用conda进行依赖管理（如没有conda请先下载[https://www.anaconda.com/download]）`conda env create -f environment.yml`
+2. 启动环境`conda activate ma-env`
+3. 前往智谱AI平台获取API Token[https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys]
+4. 创建.env文件存放Token`OPENAI_API_KEY = *****(API Token)`
+
 ## 策略评价标准
 - 奖励函数：
 $$

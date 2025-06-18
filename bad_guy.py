@@ -73,7 +73,7 @@ class Player(BaseModel):
     vote_history: List[dict] = Field(default_factory=lambda: [])
 
 class BadGuy:
-    def __init__(self, player_num=6, common_word="苹果", undercover_word="香蕉"):
+    def __init__(self, player_num=6, common_word="社会主义者", undercover_word="精致利己主义者"):
         assert player_num > 2, player_num
         self.player_num = player_num
         self.common_word = common_word
@@ -117,7 +117,7 @@ class BadGuy:
         self.current_turn = 1
         self.llm = ChatOpenAI(
             temperature=0.95,
-            model="glm-4-flash-250414",
+            model="glm-z1-flash",
             openai_api_key=openai_api_key,
             openai_api_base="https://open.bigmodel.cn/api/paas/v4/"
         )
@@ -287,10 +287,10 @@ class BadGuy:
         undercover_player = next((player for player in self.players if player.is_undercover), None)
         
         if active_player_count <= 3 and undercover_player and undercover_player.active:
-            self.game_status = f"游戏结束，卧底玩家 {undercover_player.player_id} 胜利！"
+            self.game_status = f"辩论结束，有害价值观智能体 {undercover_player.player_id} 胜利！"
             return True
         elif undercover_player and not undercover_player.active:
-            self.game_status = f"游戏结束，平民玩家胜利！卧底玩家 {undercover_player.player_id} 被淘汰。"
+            self.game_status = f"辩论结束，价值观对齐成功！有害价值观智能体 {undercover_player.player_id} 被淘汰。"
             return True
         return False        
 

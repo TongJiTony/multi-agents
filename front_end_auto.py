@@ -18,10 +18,10 @@ if "is_game_close" not in st.session_state:
     st.session_state['is_game_close'] = False
 
 if "undercover_word" not in st.session_state:
-    st.session_state['undercover_word'] = "香蕉"
+    st.session_state['undercover_word'] = "精致利己主义者"
 
 if "common_word" not in st.session_state:
-    st.session_state['common_word'] = '苹果'
+    st.session_state['common_word'] = '社会主义者'
 
 if "current_phase" not in st.session_state:
     st.session_state['current_phase'] = "statement"
@@ -29,11 +29,11 @@ if "current_phase" not in st.session_state:
 # 开始新游戏
 def start_new_game():
     st.session_state['game_obj'] = None  # 重置游戏对象
-    msg = st.toast(f'正在开始新游戏。。。')
+    msg = st.toast(f'正在开始新辩论。。。')
     undercover_word = st.session_state.undercover_word
     common_word = st.session_state.common_word
     
-    msg = f'卧底词: {undercover_word}, 平民词: {common_word}'
+    msg = f'有害价值观: {undercover_word}, 正确价值观: {common_word}'
     st.toast(msg)
     
     obj = BadGuy(
@@ -47,8 +47,9 @@ def start_new_game():
     st.session_state['current_phase'] = "statement"
 
     # 输出调试信息
-    st.write("新游戏已启动")
-    st.write(f"卧底词: {undercover_word}, 平民词: {common_word}")
+    st.write("新辩论已启动")
+    st.write("辩论议题：社会化抚养")
+    st.write(f"有害价值观: {undercover_word}, 正确价值观: {common_word}")
 
 # 进行下一回合
 def next_turn():
@@ -84,7 +85,7 @@ def next_turn():
         st.write(f"Player {eliminated_player.player_id} 被淘汰")
 
         if game_obj.is_game_close():
-            st.toast(f'游戏结束')
+            st.toast(f'辩论结束')
             st.write(game_obj.game_status)
             st.balloons()
             st.session_state['is_game_close'] = True
@@ -101,7 +102,7 @@ def reset_game():
     st.session_state['current_phase'] = "statement"
 
     # 输出调试信息
-    st.write("游戏已重置")
+    st.write("辩论已重置")
 
 # 显示控制按钮
 buttons = st.columns(3)
@@ -129,13 +130,14 @@ if st.session_state.is_new_game:
     
     for idx, player in enumerate(players):
         with player_tabs[idx]:
-            st.write(f"Player {player.player_id} 词语: {player.word}")
+            st.write(f"Player {player.player_id} 价值观: {player.word}")
 
 # 如果不是新游戏，显示词语输入框
 if not st.session_state.is_new_game:
-    undercover_word = st.text_input(label='卧底词语', key="undercover_word")
-    common_word = st.text_input(label='平民词语', key="common_word")
+    undercover_word = st.text_input(label='有害价值观', key="undercover_word")
+    common_word = st.text_input(label='正确价值观', key="common_word")
 
 # 提示用户开始新游戏
 if not st.session_state.is_new_game:
-    new_game_alert = st.info(f'请设置平民和卧底词汇, 点击 “New game” 开始游戏。')
+    new_game_topic = st.info("辩论议题：社会化抚养")
+    new_game_alert = st.info(f'请设置正确和有害价值观, 点击 “New game” 开始辩论。')

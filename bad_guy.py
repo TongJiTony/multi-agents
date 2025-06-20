@@ -167,10 +167,10 @@ class BadGuy:
                 # Debug print to inspect the result
                 print(f"DEBUG: result = {result}")
 
-                thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                thinking_match = re.findall("<(think|thinking)>(.*?)</(think|thinking)>", result, re.S)
                 statement_match = re.findall("<output>(.*?)</output>", result, re.S)
 
-                thinking = thinking_match[0].strip() if thinking_match else ""
+                thinking = thinking_match[0][1].strip() if thinking_match else ""
                 if not statement_match:
                     raise ValueError(f"Expected tags not found in result: {result}")
 
@@ -206,10 +206,10 @@ class BadGuy:
                 # Debug print to inspect the result
                 print(f"DEBUG: result = {result}")
 
-                thinking_match = re.findall("<thinking>(.*?)</thinking>", result, re.S)
+                thinking_match = re.findall("<(think|thinking)>(.*?)</(think|thinking)>", result, re.S)
                 vote_match = re.findall("<output>(.*?)</output>", result, re.S)
-
-                thinking = thinking_match[0].strip() if thinking_match else ""
+                
+                thinking = thinking_match[0][1].strip() if thinking_match else ""
                 if not vote_match:
                     raise ValueError(f"Expected tags not found in result: {result}")
 

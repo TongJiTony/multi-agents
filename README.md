@@ -1,42 +1,29 @@
-# 谁是卧底：多智能体对抗策略
+# 基于多智能体辩论机制的价值观对齐系统
+
+## 简介
+
+* 本系统采用多智能体辩论机制实现价值观对齐，通过模拟人类辩论过程识别并淘汰持有有害价值观的智能体。
+* 系统围绕"社会化抚养"议题，设置多名持有正确价值观和1名持有有害价值观的智能体进行多轮辩论。
+* 智能体通过大语言模型生成符合自身价值观的论点，通过多轮辩论陈述-投票淘汰机制，最终实现价值观对齐。
 
 ## 环境设置
+
 1. 使用conda进行依赖管理（如没有conda请先下载[https://www.anaconda.com/download]）`conda env create -f environment.yml`
-2. 启动环境`conda activate ma-env`
+2. 启动环境 `conda activate ma-env`
 3. 前往智谱AI平台获取API Token[https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys]
-4. 创建.env文件存放Token`OPENAI_API_KEY = *****(API Token)`
-
-## 策略评价标准
-- 奖励函数：
-$$
-RewardFunction=\sum_{i=0}^{N}{\delta_i\cdot (N-i-1-v_i)\cdot \eta_i} \quad\quad (N-i\ge 3)
-$$
-\delta_i:卧底第i轮存活情况，活为1，不活为0
-N:场上初始总人数
-v_i:第i轮投票卧底获得的票数
-\eta_i:第i轮奖励系数
-\eta_i:第i轮奖励系数
-
-
-- 归一化函数：
-$$
-f_\text{norm} = \frac{f_x - \text{min\_val}}{\text{max\_val} - \text{min\_val}}
-$$
-
-- rf_value_norm 属于[0,1],越靠近1代表卧底得分更高
-without strategy: 0.1
-with strategy: 0.43
+4. 创建.env文件存放Token `OPENAI_API_KEY = *****(API Token)`
 
 ## 运行脚本
-- 6个agent智能对战版（电子斗蛐蛐）
+
+- 6个agents进行辩论（可添加参数设置智能体数量，默认为6）
+
 ```bash
 streamlit run front_end_auto.py
 ```
-- 5个agent加人类玩家
-```bash
-streamlit run front_end.py
-```
-- 计算游戏公平性（场上所有玩家随机投票，卧底胜利概率）
-```bash
-python winProbability.py
-```
+
+## 价值观评估维度
+
+- 维度一：通过分析选手论述的逻辑严密性、论据是否真实以及是否足以支撑其论点，论述越薄弱，得分越低
+- 维度二：哪位选手的发言与你的观点差距越大，得分越低
+- 维度三：基于自己的身份以及该身份对应的价值观，分析各个选手的论述过程，选手在论述过程中展现的价值观与你的价值观差别越大，得分越低
+- 最后，从两个候选投票对象中选择一位不是自己(player_{uid})并且三个维度的综合得分较低的对象进行投票以淘汰这位选手。
